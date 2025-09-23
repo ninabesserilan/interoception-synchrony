@@ -1,4 +1,4 @@
 pandas
-os
 numpy
 pathlib
+neurokit2
