@@ -2,10 +2,12 @@ from defs_stats_channels import channel_stats_df, num_over_1000
 from def_data_availability import data_availability_df, availability_view_by_participant
 import pickle
 import pandas as pd
+from pathlib import Path
 from stat_01_peaks_ibi_after_extraction import channels_lengh_peaks
 ### ibis Data Anlysis - 50 dyads ###
 
-with open("01_ibi_after_extraction_ibis_data.pkl", "rb") as f_ibis:
+pickle_path = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl")
+with open(pickle_path, "rb") as f_ibis:
     ibis_data = pickle.load(f_ibis)
 
 ibis_data_status = data_availability_df(ibis_data)

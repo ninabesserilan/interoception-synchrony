@@ -2,10 +2,13 @@ from defs_stats_channels import channel_stats_df, num_over_1000
 from def_data_availability import data_availability_df, availability_view_by_participant
 import pickle
 import pandas as pd
+from pathlib import Path
 
 ### peaks Data Anlysis - 
 
-with open("01_ibi_after_extraction_peaks_data.pkl", "rb") as f_peaks:
+pickle_path = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_peaks_data.pkl")
+
+with open(pickle_path, "rb") as f_peaks:
     peaks_data = pickle.load(f_peaks)
 
 peaks_data_status = data_availability_df(peaks_data)
