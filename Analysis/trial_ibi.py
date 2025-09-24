@@ -22,11 +22,11 @@ with open(peaks_pickle, "rb") as f_peaks:
 ibi_toys_9mon_infants_data = filter_group_condition(ibis_data, group="9_months", condition="toys", participant= "infant")
 ibi_toys_9mon_moms_data = filter_group_condition(ibis_data, group="9_months", condition="toys", participant= "infant")
 
-ibi_no_toys_9mon_infants_data = filter_group_condition(ibis_data, group="9_months", condition="no_toys", participant= "mom")
+peaks_data = filter_group_condition(ibis_data, group="9_months", condition="no_toys", participant= "mom")
 ibi_no_toys_9mon_moms_data = filter_group_condition(ibis_data, group="9_months", condition="no_toys", participant= "mom")
 
 
-peaks_toys_9mon_infants_data = filter_group_condition(peaks_data, group="9_months", condition="toys", participant= "infant")
+peaks_data = filter_group_condition(peaks_data, group="9_months", condition="toys", participant= "infant")
 peaks_toys_9mon_moms_data = filter_group_condition(peaks_data, group="9_months", condition="toys", participant= "infant")
 
 peaks_no_toys_9mon_infants_data = filter_group_condition(peaks_data, group="9_months", condition="no_toys", participant= "mom")
