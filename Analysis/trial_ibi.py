@@ -37,46 +37,52 @@ peaks_toys_9mon_moms_data = filter_group_condition(peaks_data, group="9_months",
 peaks_no_toys_9mon_infants_data = filter_group_condition(peaks_data, group="9_months", condition="no_toys", participant= "infant")
 peaks_no_toys_9mon_moms_data = filter_group_condition(peaks_data, group="9_months", condition="no_toys", participant= "mom")
 
-# def verify_ibis_vs_peaks(ibi_data, peaks_data):
-#     results = {}
+def verify_ibis_vs_peaks(ibi_data, peaks_data):
+    results = {}
+    issues = []
 
-#     for subj_id, subj_dict in ibi_data.items():  # loop over subjects
-#         results[subj_id] = {}
-#         for participant, part_dict in subj_dict.items():  # infant / mom
-#             results[subj_id][participant] = {}
-#             for ch_name, ch_dict in part_dict.items():  # ch_0, ch_1...
-#                 ibis = ch_dict["data"]
-#                 peaks = peaks_data[subj_id][participant][ch_name]["data"]
+    for subj_id, subj_dict in ibi_data.items():
+        results[subj_id] = {}
+        for participant, part_dict in subj_dict.items():
+            results[subj_id][participant] = {}
+            for ch_name, ch_dict in part_dict.items():
+                ibis = ch_dict["data"]
+                peaks = peaks_data[subj_id][participant][ch_name]["data"]
 
-#                 # check all consecutive pairs
-#                 comparisons = []
-#                 for idx in range(len(ibis)):
-#                     if idx + 1 < len(peaks):  # safe check
-#                         comparisons.append(ibis[idx] == peaks[idx+1] - peaks[idx])
-#                     else:
-#                         comparisons.append(None)  # last element has no "next peak"
+                # Ensure array-like
+                if not hasattr(ibis, "__len__") or not hasattr(peaks, "__len__"):
+                    results[subj_id][participant][ch_name] = False
+                    issues.append((subj_id, participant, ch_name, "scalar values"))
+                    continue
 
-#                 results[subj_id][participant][ch_name] = all(
-#                     c is True for c in comparisons if c is not None
-#                 )
+                # Need at least 2 peaks to make 1 IBI
+                if len(peaks) < 2 or len(ibis) < 1:
+                    results[subj_id][participant][ch_name] = False
+                    issues.append((subj_id, participant, ch_name, "not enough data"))
+                    continue
 
-#     return results
+                # Expected relation: len(ibis) == len(peaks) - 1
+                if len(ibis) != len(peaks) - 1:
+                    results[subj_id][participant][ch_name] = False
+                    issues.append((subj_id, participant, ch_name, "length mismatch"))
+                    continue
 
+                # Verify the actual values
+                comparisons = [
+                    ibis[idx] == peaks[idx+1] - peaks[idx]
+                    for idx in range(len(ibis))
+                ]
+                all_match = all(comparisons)
 
-# # Run it for toys / no_toys, infants / moms, 9_months
-# verification_toys_infants = verify_ibis_vs_peaks(
-#     ibi_toys_9mon_infants_data, peaks_toys_9mon_infants_data
-# )
-# verification_toys_moms = verify_ibis_vs_peaks(
-#     ibi_toys_9mon_moms_data, peaks_toys_9mon_moms_data
-# )
-# verification_no_toys_infants = verify_ibis_vs_peaks(
-#     ibi_no_toys_9mon_infants_data, peaks_no_toys_9mon_infants_data
-# )
-# verification_no_toys_moms = verify_ibis_vs_peaks(
-#     ibi_no_toys_9mon_moms_data, peaks_no_toys_9mon_moms_data
-# )
+                results[subj_id][participant][ch_name] = all_match
+                if not all_match:
+                    issues.append((subj_id, participant, ch_name, "values mismatch"))
 
+    return results, issues
+# Run with your datasets
+verification_no_toys_infants, issues_no_toys_infants = verify_ibis_vs_peaks(
+    ibi_no_toys_9mon_infants_data, peaks_no_toys_9mon_infants_data
+)
 
 # An explanation:
 
