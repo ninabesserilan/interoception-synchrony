@@ -84,21 +84,3 @@ verification_no_toys_infants, issues_no_toys_infants = verify_ibis_vs_peaks(
     ibi_no_toys_9mon_infants_data, peaks_no_toys_9mon_infants_data
 )
 
-# An explanation:
-
-# The ibi is the interval between 2 peaks. 
-# So, the first ibi value should be the difference between the second peak and the first peak.
-# For example:
-
-# example_first_ibi = ibi_toys_9mon_infants_data['01']['infant']['ch_0']['data'][0]
-# example_first_peak = peaks_toys_9mon_infants_data['01']['infant']['ch_0']['data'][0]
-# example_second_peak = peaks_toys_9mon_infants_data['01']['infant']['ch_0']['data'][1]
-
-# example_first_ibi == example_second_peak - example_first_peak
-
-# for idx in range(0, len(ibi_no_toys_9mon_infants_data['89']['infant']['ch_0']['data'])):
-#     ibi = ibi_no_toys_9mon_infants_data['89']['infant']['ch_0']['data'][idx]
-#     first_peak = peaks_no_toys_9mon_infants_data['89']['infant']['ch_0']['data'][idx]
-#     second_peak = peaks_no_toys_9mon_infants_data['89']['infant']['ch_0']['data'][idx+1]
-#     print(ibi == second_peak - first_peak)
-
