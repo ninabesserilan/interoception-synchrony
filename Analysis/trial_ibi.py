@@ -4,14 +4,14 @@ import numpy as np
 import pickle
 from def_filter_pickle import filter_group_condition
 
-# all_data_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_data.pkl")
-# ibi_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl") 
-# peaks_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_peaks_data.pkl")
+all_data_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_data.pkl")
+ibi_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl") 
+peaks_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_peaks_data.pkl")
 
 
-all_data_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_data.pkl")
-ibi_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_ibis_data.pkl") 
-peaks_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_peaks_data.pkl")
+# all_data_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_data.pkl")
+# ibi_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_ibis_data.pkl") 
+# peaks_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_peaks_data.pkl")
 
 
 with open(all_data_pickle, "rb") as f_data:
@@ -24,18 +24,18 @@ with open(peaks_pickle, "rb") as f_peaks:
     peaks_data = pickle.load(f_peaks)
 
 
-ibi_toys_9mon_infants_data = filter_group_condition(ibis_data, group="9_months", condition="toys", participant= "infant")
-ibi_toys_9mon_moms_data = filter_group_condition(ibis_data, group="9_months", condition="toys", participant= "mom")
+ibi_toys_9m_infants_data = filter_group_condition(ibis_data, group="9_months", condition="toys", participant= "infant")
+ibi_toys_9m_moms_data = filter_group_condition(ibis_data, group="9_months", condition="toys", participant= "mom")
 
-ibi_no_toys_9mon_infants_data = filter_group_condition(ibis_data, group="9_months", condition="no_toys", participant= "infant")
-ibi_no_toys_9mon_moms_data = filter_group_condition(ibis_data, group="9_months", condition="no_toys", participant= "mom")
+ibi_no_toys_9m_infants_data = filter_group_condition(ibis_data, group="9_months", condition="no_toys", participant= "infant")
+ibi_no_toys_9m_moms_data = filter_group_condition(ibis_data, group="9_months", condition="no_toys", participant= "mom")
 
 
-peaks_toys_9mon_infants_data = filter_group_condition(peaks_data, group="9_months", condition="toys", participant= "infant")
-peaks_toys_9mon_moms_data = filter_group_condition(peaks_data, group="9_months", condition="toys", participant= "mom")
+peaks_toys_9m_infants_data = filter_group_condition(peaks_data, group="9_months", condition="toys", participant= "infant")
+peaks_toys_9m_moms_data = filter_group_condition(peaks_data, group="9_months", condition="toys", participant= "mom")
 
-peaks_no_toys_9mon_infants_data = filter_group_condition(peaks_data, group="9_months", condition="no_toys", participant= "infant")
-peaks_no_toys_9mon_moms_data = filter_group_condition(peaks_data, group="9_months", condition="no_toys", participant= "mom")
+peaks_no_toys_9m_infants_data = filter_group_condition(peaks_data, group="9_months", condition="no_toys", participant= "infant")
+peaks_no_toys_9m_moms_data = filter_group_condition(peaks_data, group="9_months", condition="no_toys", participant= "mom")
 
 def verify_ibis_vs_peaks(ibi_data, peaks_data):
     results = {}
@@ -81,6 +81,17 @@ def verify_ibis_vs_peaks(ibi_data, peaks_data):
     return results, issues
 # Run with your datasets
 verification_no_toys_infants, issues_no_toys_infants = verify_ibis_vs_peaks(
-    ibi_no_toys_9mon_infants_data, peaks_no_toys_9mon_infants_data
+    ibi_no_toys_9m_infants_data, peaks_no_toys_9m_infants_data
 )
 
+verification_toys_infants, issues_toys_infants = verify_ibis_vs_peaks(
+    ibi_toys_9m_infants_data, peaks_toys_9m_infants_data
+)
+
+verification_no_toys_9m_moms, issues_no_toys_moms = verify_ibis_vs_peaks(
+    ibi_no_toys_9m_moms_data, peaks_no_toys_9m_moms_data
+)
+
+verification_toys_moms, issues_toys_moms = verify_ibis_vs_peaks(
+    ibi_toys_9m_moms_data, peaks_toys_9m_moms_data
+)
