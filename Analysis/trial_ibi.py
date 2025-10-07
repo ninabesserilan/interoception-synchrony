@@ -4,14 +4,14 @@ import numpy as np
 import pickle
 from def_filter_pickle import filter_group_condition
 
-all_data_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_data.pkl")
-ibi_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl") 
-peaks_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_peaks_data.pkl")
+# all_data_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_data.pkl")
+# ibi_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl") 
+# peaks_pickle = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_peaks_data.pkl")
 
 
-# all_data_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_data.pkl")
-# ibi_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_ibis_data.pkl") 
-# peaks_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_peaks_data.pkl")
+all_data_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_data.pkl")
+ibi_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_ibis_data.pkl") 
+peaks_pickle = Path("Q:\\hoehl\\projects\\mibo_p\\Physiological_Synchrony\\analyses\\Files processing - availability information\\01_ibi_after_extraction_peaks_data.pkl")
 
 
 with open(all_data_pickle, "rb") as f_data:
