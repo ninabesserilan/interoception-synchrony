@@ -83,14 +83,14 @@ def compute_metrics(ibis_ms, participant):
             (Shaffer & Ginsberg, 2017)
     """
 
-    if participant == 'mom':
-        long_ibi_threshold=1000
+    if participant == 'mom': # NEED TO SWITCH AFTER RECREATING THE PICKLE WITH MOM = ECG1 AND INFANT = ECG2
+        long_ibi_threshold=600
 
     elif participant == 'infant':
-        long_ibi_threshold=600
+        long_ibi_threshold=1000
     
     else:
-        long_ibi_threshold=1000
+        long_ibi_threshold=800
 
     ibis = np.array(ibis_ms)
     ibis = ibis[~np.isnan(ibis)]
@@ -168,7 +168,7 @@ def build_best_channel_df(ibis_data_dict, participant: str, short_channel_pct=0.
             "ch2": sub_data.get("ch_2", {}).get("data", [])
         }
 
-        best_ch, results = select_best_channel(ibis_channels, short_channel_pct)
+        best_ch, results = select_best_channel(ibis_channels, participant, short_channel_pct)
         row = {"subject_id": subj_id, "best_channel": best_ch}
 
         if results is None:
