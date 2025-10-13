@@ -6,3 +6,7 @@
 (see if there are smaller time point in different chs)
 
 IMPORTANT: FIND OUT WHO'S THE CHILD AND WHO'S THE MOTHER
+
+
+For 14.10 - 
+should create new pickle with the new config for infant and mother - we need to switch between them

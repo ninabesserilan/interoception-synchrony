@@ -25,8 +25,8 @@ Config_01_ibi_after_extraction = {
         'puzzle': 'puzzle',
     },
     'participant': {
-        'infant': 'ECG1',
-        'mom': 'ECG2',
+        'mom': 'ECG1', # NEW 13.10.25 - switch between infant and mom
+        'infant': 'ECG2',
     },
     'channel': {
         'ch_0': 'channel0',
@@ -59,7 +59,7 @@ Config_03_jason_ibi_empathy_data = {
         'freeplay': 'freeplay',
         'reunion': 'reunion'},
 
-    'participant': { 'infant': 'ecg1','mom': 'ecg2'},
+    'participant': { 'mom': 'ecg1','infant': 'ecg2'}, # NEW 13.10.25 - switch between infant and mom
 
     'channel': { 
         'ch_0': ['ch1','_channel0'], 
@@ -87,9 +87,9 @@ Config_01_csv_ibi_empathy_data = {
         'neutral': 'neutral'},
 
 
-    'participant': {
-        'infant': 'ECG1',
-        'mom': 'ECG2',
+    'participant': { # NEW 13.10.25 - switch between infant and mom
+        'mom': 'ECG1',
+        'infant': 'ECG2',
     },
     'channel': {
         'ch_0': 'channel0',
@@ -99,32 +99,5 @@ Config_01_csv_ibi_empathy_data = {
 }
 
 
-# Config_05_rsa_calculated = {
-
-#     'analysis_stage': '05_rsa_calculated',
-
-#     'data_type': {
-#         'raw': '_raw',
-#         'detrended': '_detrended',
-#     },
-#     'group': {
-#         '9_months': 'wp3_0',   
-#     },
-
-#     'condition': {
-#         'toys': 'wtoys',
-#         'no_toys': 'wotoys',
-
-#     },
-#     'participant_index': { 
-#         'infantRsa_index': 1,
-#         'motherRsa_index': 2, 
-#     },
-#     'channel': { 
-#         'ch_0': 'channel0', 
-#         'ch_1': 'channel1', 
-#         'ch_2': 'channel2', 
-#     }
-# }
 
 

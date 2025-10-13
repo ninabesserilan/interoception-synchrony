@@ -1,4 +1,4 @@
-from trial_ibi import ibi_toys_9m_infants_data
+from select_ch import ibis_toys_9m_infants_data
 import numpy as np
 import pandas as pd
 
@@ -15,7 +15,7 @@ import pandas as pd
 #         }
     
 
-ibis_data_dic = ibi_toys_9m_infants_data['01']['infant']
+ibis_data_dic = ibis_toys_9m_infants_data['01']['infant']
 
 
 ibis_channels = {
