@@ -171,6 +171,12 @@ def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'],
         # One invalid → it's automatically worst
         worst_ch = invalid_channels[0]
         total_ranks[worst_ch] = max(total_ranks.values()) + 1
+        if best_ch == worst_ch:
+            # Find valid channel with lowest total rank
+            valid_ranks = {ch: total_ranks[ch] for ch in valid_channels if ch in total_ranks}
+            if valid_ranks:
+                best_ch = min(valid_ranks, key=valid_ranks.get)
+
 
     elif len(invalid_channels) == 2:
         # Two invalid → valid is automatically best
@@ -202,7 +208,8 @@ def build_best_channel_df(ibis_data_dict, participant: Literal['mom', 'infant'],
     and columns ordered by parameter type: length → median → sdrr → long_ibi_count → mean.
     """
     rows = []
-    expected_metrics = ["sdrr", "long_ibi_count"]
+    best_ibis_ch_dict = {}
+
 
     for subj_id, subj_data in ibis_data_dict.items():
         sub_data = subj_data.get(participant, {})
@@ -211,11 +218,12 @@ def build_best_channel_df(ibis_data_dict, participant: Literal['mom', 'infant'],
         ibis_channels = {}
         for ch_key in sub_data.keys():
             if 'ch' in ch_key and 'data' in sub_data[ch_key]:
-                ibis_channels[ch_key.replace('_', '')] = sub_data[ch_key]['data']
+                ibis_channels[ch_key] = sub_data[ch_key]['data']
 
         # Select best channel + ranks
         best_ch, results = select_best_channel(ibis_channels, participant, short_channel_pct, weights)
         row = {"subject_id": subj_id}
+
 
         if results is None:
             row.update({"best_channel": None, "medium_channel": None, "worst_channel": None})
@@ -233,6 +241,9 @@ def build_best_channel_df(ibis_data_dict, participant: Literal['mom', 'infant'],
                 row[f"{label}_channel"] = channel_order[i]
             else:
                 row[f"{label}_channel"] = None
+
+        # Store best channel for this subject
+        best_ibis_ch_dict[subj_id] = best_ch
 
         # Add metrics and length/mean/median for each label
         for i, label in enumerate(labels):
@@ -265,4 +276,121 @@ def build_best_channel_df(ibis_data_dict, participant: Literal['mom', 'infant'],
     extra_cols = [c for c in df.columns if c not in column_order]
     df = df[column_order + extra_cols]
 
-    return df
+    return df, best_ibis_ch_dict
+
+
+# -----------------------------
+# Analyze missing peaks of the best ibis ch
+# -----------------------------
+
+
+def analyze_missing_peaks(participant: Literal['infant', 'mom'], peaks_data_dict, ibis_data_dict, best_ibis_ch_dict):
+    """
+    Analyze missing peaks in the best IBI channel per subject compared to other channels.
+
+    Returns:
+    - report: dict keyed by subject, with missing peak info per subject
+    """
+    report = {}
+    
+    for subj_id, ibis_subj_data in ibis_data_dict.items():
+        peaks_subj_data = peaks_data_dict.get(subj_id, {})
+        
+        sub_ibi_data = ibis_subj_data.get(participant, {})
+        sub_peak_data = peaks_subj_data.get(participant, {})
+        
+        # Extract ibis channels data
+        ibis_channels = {}
+        for ch_key, ch_data in sub_ibi_data.items():
+            if 'ch' in ch_key and 'data' in ch_data:
+                ibis_channels[ch_key] = ch_data['data']
+        
+        # Extract peaks channels data
+        peaks_channels = {}
+        for ch_key, ch_data in sub_peak_data.items():
+            if 'ch' in ch_key and 'data' in ch_data:
+                peaks_channels[ch_key] = ch_data['data']
+        
+        best_ch = best_ibis_ch_dict.get(subj_id)
+        best_ch_ibi_data = ibis_channels.get(best_ch)
+        best_ch_peak_data = peaks_channels.get(best_ch)
+        
+        if best_ch_peak_data is None:
+            print(f"Warning: No peak data for  {subj_id} best ch {best_ch} .")
+
+            continue  # skip if no data for best channel
+       
+        # Validate IBI matches difference of peaks
+        inferred_ibi = np.diff(best_ch_peak_data)
+        min_len = min(len(best_ch_ibi_data), len(inferred_ibi))
+        if not np.allclose(best_ch_ibi_data[:min_len], inferred_ibi[:min_len], atol=1e-3):
+            print(f"Warning: IBI data for {subj_id} channel {best_ch} does not match peak differences.")
+            continue
+
+        
+        missing_peaks = analyze_missing_peaks_intervals(best_ch_peak_data, peaks_channels, best_ch)
+        
+        report[subj_id] = missing_peaks
+        print(f'sub {subj_id} best ch {best_ch}: {report[subj_id]}')
+    
+    return report
+
+
+def analyze_missing_peaks_intervals(best_ch_peak_data, peaks_channels, best_ch):
+    missing_peaks_report = {}
+    best_peaks = np.array(best_ch_peak_data)
+    best_ibis = np.diff(best_peaks)
+    median_ibi = np.median(best_ibis)
+    threshold = median_ibi 
+
+
+    other_channels = {ch: peaks for ch, peaks in peaks_channels.items() if ch != best_ch}
+
+    # Check peaks before the first peak in best channel
+    start_time = best_peaks[0]
+    for ch_name, ch_peaks in other_channels.items():
+        ch_peaks = np.array(ch_peaks)
+        before_start_peaks = ch_peaks[(ch_peaks < start_time) & (ch_peaks >= start_time - threshold)]
+        if len(before_start_peaks) > 0:
+            missing_peaks_report.setdefault('before_start', {})[ch_name] = before_start_peaks.tolist()
+
+    # Check peaks after the last peak in best channel
+    end_time = best_peaks[-1]
+    for ch_name, ch_peaks in other_channels.items():
+        ch_peaks = np.array(ch_peaks)
+        after_end_peaks = ch_peaks[(ch_peaks > end_time) & (ch_peaks <= end_time + threshold)]
+        if len(after_end_peaks) > 0:
+            missing_peaks_report.setdefault('after_end', {
+                'best_channel': best_ch,
+                'best_channel_peaks': [int(end_time)],
+                'situation': 'Peaks detected after last best-channel peak.'
+            })[ch_name] = [int(p) for p in after_end_peaks]
+
+    # Existing interval checking for missing peaks inside intervals
+    for ibi_idx in range(len(best_ibis)):
+        interval_start = best_peaks[ibi_idx]
+        interval_end = best_peaks[ibi_idx + 1]
+        missing_per_ch = {}
+        for ch_name, ch_peaks in other_channels.items():
+            ch_peaks = np.array(ch_peaks)
+            peaks_in_interval = ch_peaks[(ch_peaks > interval_start) & (ch_peaks < interval_end)]
+            important_peaks = [pt for pt in peaks_in_interval
+                               if (pt - interval_start) > threshold and (interval_end - pt) > threshold]
+            if important_peaks:
+                missing_per_ch[ch_name] = [int(pt) for pt in important_peaks]
+                
+        if missing_per_ch:
+            # Gather best channel reference info
+            best_peaks_in_interval = [int(p) for p in best_peaks
+                                      if interval_start <= p <= interval_end]
+            situation = f"Best channel ({best_ch}) has {len(best_peaks_in_interval)} peaks in this interval."
+
+            missing_peaks_report[ibi_idx] = {
+                'best_channel': best_ch,
+                'best_channel_peaks': best_peaks_in_interval,
+                'situation': situation,
+                'other_channels': missing_per_ch
+            }
+
+
+    return missing_peaks_report
