@@ -125,23 +125,30 @@ def rank_channels(metrics_per_ch, weights):
 # -----------------------------
 # Select best channel
 # -----------------------------
-def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'], short_channel_pct=0.9, weights=None):
+def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'],
+                        short_channel_pct=0.9, weights=None):
+    """
+    Select the best channel for a participant, keeping invalid (too short) channels
+    but ranking them automatically as the worst.
+    Works perfectly when you have 3 channels per subject.
+    """
     if weights is None:
         weights = {'sdrr': 1.0, 'long_ibi_count': 2.0}
 
-    # Filter channels by length
+    # Compute lengths
     n_ibis = {ch: len(np.atleast_1d(ibis)) for ch, ibis in ibis_channels.items()}
     max_len = max(n_ibis.values()) if n_ibis else 0
-    valid_channels = [ch for ch, n in n_ibis.items() if n >= short_channel_pct * max_len]
 
-    if not valid_channels:
-        return None, None
+    # Mark validity
+    valid_flags = {ch: (n_ibis[ch] >= short_channel_pct * max_len) for ch in n_ibis}
+    all_channels = list(n_ibis.keys())
 
-    # Compute metrics and add length to metrics for tie-break
+    # Compute metrics for all channels
     metrics_per_ch = {}
-    for ch in valid_channels:
+    for ch in all_channels:
         metrics = compute_metrics(ibis_channels[ch], participant)
         metrics['length'] = n_ibis[ch]
+        metrics['invalid'] = not valid_flags[ch]
         metrics_per_ch[ch] = metrics
 
     # Compute consistency (optional)
@@ -150,19 +157,49 @@ def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'], sh
     # Rank channels
     best_ch, ranks, total_ranks = rank_channels(metrics_per_ch, weights)
 
+    # -----------------------------
+    # Handle invalid channel logic
+    # -----------------------------
+    invalid_channels = [ch for ch, m in metrics_per_ch.items() if m.get('invalid', False)]
+    valid_channels = [ch for ch in metrics_per_ch.keys() if ch not in invalid_channels]
+
+    if len(invalid_channels) == 0:
+        # All valid → regular ranking, do nothing special
+        pass
+
+    elif len(invalid_channels) == 1:
+        # One invalid → it's automatically worst
+        worst_ch = invalid_channels[0]
+        total_ranks[worst_ch] = max(total_ranks.values()) + 1
+
+    elif len(invalid_channels) == 2:
+        # Two invalid → valid is automatically best
+        best_ch = valid_channels[0]
+        total_ranks[best_ch] = min(total_ranks.values()) - 1
+
+        # Re‑rank the two invalids among themselves
+        _, ranks_invalid, total_invalid = rank_channels(
+            {ch: metrics_per_ch[ch] for ch in invalid_channels}, weights
+        )
+
+        max_rank = max(total_ranks.values())
+        for i, (ch, rank_val) in enumerate(sorted(total_invalid.items(), key=lambda x: x[1])):
+            total_ranks[ch] = max_rank + i + 1
     return best_ch, {
         "metrics": metrics_per_ch,
         "consistency": channel_consistency,
         "ranks": ranks,
         "total_ranks": total_ranks
     }
-
-
-def build_best_channel_df(ibis_data_dict, participant: Literal['mom', 'infant'], short_channel_pct=0.9, weights=None):
+    
+# -----------------------------
+# Build summary DataFrame
+# -----------------------------
+def build_best_channel_df(ibis_data_dict, participant: Literal['mom', 'infant'], 
+                          short_channel_pct=0.9, weights=None):
     """
-    Build a comprehensive summary DataFrame containing all channels for each subject,
-    including invalid channels, with their metrics, length, mean, and median.
-    Additionally, label best, medium, worst channels based on ranking of valid channels per subject.
+    Build a summary DataFrame with channels ordered by rank (best → medium → worst),
+    and columns ordered by parameter type: length → median → sdrr → long_ibi_count → mean.
     """
     rows = []
     expected_metrics = ["sdrr", "long_ibi_count"]
@@ -170,76 +207,62 @@ def build_best_channel_df(ibis_data_dict, participant: Literal['mom', 'infant'],
     for subj_id, subj_data in ibis_data_dict.items():
         sub_data = subj_data.get(participant, {})
 
-        # Extract all channels for the subject
+        # Extract channels
         ibis_channels = {}
         for ch_key in sub_data.keys():
             if 'ch' in ch_key and 'data' in sub_data[ch_key]:
                 ibis_channels[ch_key.replace('_', '')] = sub_data[ch_key]['data']
 
-        # Determine valid channels using the short_channel_pct criterion
-        n_ibis = {ch: len(np.atleast_1d(v)) for ch, v in ibis_channels.items()}
-        max_len = max(n_ibis.values()) if n_ibis else 0
-        valid_channels = [ch for ch, n in n_ibis.items() if n >= short_channel_pct * max_len]
+        # Select best channel + ranks
+        best_ch, results = select_best_channel(ibis_channels, participant, short_channel_pct, weights)
+        row = {"subject_id": subj_id}
 
-        # Compute metrics for all channels (valid + invalid)
-        all_metrics = {}
-        for ch, ibis_vals in ibis_channels.items():
-            metrics = compute_metrics(ibis_vals, participant)
-            all_metrics[ch] = metrics
-
-        # Select best channel and rankings only from valid channels
-        if valid_channels:
-            valid_ibis_channels = {ch: ibis_channels[ch] for ch in valid_channels}
-            best_ch, results = select_best_channel(valid_ibis_channels, participant, short_channel_pct, weights)
-            ranks = results["ranks"]
-            total_ranks = results["total_ranks"]
-        else:
-            best_ch, ranks, total_ranks = None, {}, {}
-
-        # Get a sorted list of valid channels by total rank
-        sorted_valid_channels = []
-        if total_ranks:
-            sorted_valid_channels = [ch for ch, _ in sorted(total_ranks.items(), key=lambda x: x[1])]
-
-        # Identify best, medium, worst channel labels for subject (only among valid channels)
-        label_channels = [None, None, None]
-        for i in range(min(3, len(sorted_valid_channels))):
-            label_channels[i] = sorted_valid_channels[i]
-
-        # Now create one row per channel (valid or invalid) with all data
-        for ch in ibis_channels.keys():
-            row = {"subject_id": subj_id, "channel": ch}
-
-            ibis_vals = np.atleast_1d(ibis_channels[ch]).astype(float)
-            row["length"] = len(ibis_vals)
-            row["mean"] = np.nanmean(ibis_vals)
-            row["median"] = np.nanmedian(ibis_vals)
-
-            metrics = all_metrics.get(ch, {})
-            for m in expected_metrics:
-                row[m] = metrics.get(m, np.nan)
-
-            # Label channels if they are best/medium/worst among valid channels
-            if ch == label_channels[0]:
-                row["label"] = "best_channel"
-            elif ch == label_channels[1]:
-                row["label"] = "medium_channel"
-            elif ch == label_channels[2]:
-                row["label"] = "worst_channel"
-            else:
-                row["label"] = None
-
-            # Add ranking info if available (only valid channels have ranking info)
-            if ch in ranks:
-                for metric_rank_key, rank_val in ranks[ch].items():
-                    row[metric_rank_key] = rank_val
-                row["total_rank"] = total_ranks.get(ch, np.nan)
-            else:
-                row["sdrr_rank"] = np.nan
-                row["long_ibi_count_rank"] = np.nan
-                row["total_rank"] = np.nan
-
+        if results is None:
+            row.update({"best_channel": None, "medium_channel": None, "worst_channel": None})
             rows.append(row)
+            continue
 
-    # Return a DataFrame with one channel per row including valid/invalid and ranking labels
-    return pd.DataFrame(rows)
+        # Sort channels by total rank
+        sorted_channels = sorted(results["total_ranks"].items(), key=lambda x: x[1])
+        channel_order = [ch for ch, _ in sorted_channels]
+
+        # Label top 3
+        labels = ["best", "medium", "worst"]
+        for i, label in enumerate(labels):
+            if i < len(channel_order):
+                row[f"{label}_channel"] = channel_order[i]
+            else:
+                row[f"{label}_channel"] = None
+
+        # Add metrics and length/mean/median for each label
+        for i, label in enumerate(labels):
+            if i >= len(channel_order):
+                continue
+            ch = channel_order[i]
+            metrics = results["metrics"][ch]
+            ibis_vals = np.atleast_1d(ibis_channels[ch]).astype(float)
+            row[f"length_{label}"] = len(ibis_vals)
+            row[f"median_{label}"] = np.nanmedian(ibis_vals)
+            row[f"sdrr_{label}"] = metrics.get("sdrr", np.nan)
+            row[f"long_ibi_count_{label}"] = metrics.get("long_ibi_count", np.nan)
+            row[f"mean_{label}"] = np.nanmean(ibis_vals)
+
+        rows.append(row)
+
+    # Build DataFrame
+    df = pd.DataFrame(rows)
+
+    # Reorder columns as desired
+    column_order = ["subject_id", 
+                    "best_channel", "medium_channel", "worst_channel",
+                    "length_best", "length_medium", "length_worst",
+                    "long_ibi_count_best", "long_ibi_count_medium", "long_ibi_count_worst",
+                    "sdrr_best", "sdrr_medium", "sdrr_worst",
+                    "mean_best", "mean_medium", "mean_worst",
+                    "median_best", "median_medium", "median_worst"]
+    
+    # Keep any extra columns at the end
+    extra_cols = [c for c in df.columns if c not in column_order]
+    df = df[column_order + extra_cols]
+
+    return df
