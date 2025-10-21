@@ -283,7 +283,6 @@ def build_best_channel_df(ibis_data_dict, participant: Literal['mom', 'infant'],
 # Analyze missing peaks of the best ibis ch
 # -----------------------------
 
-
 def analyze_missing_peaks(participant: Literal['infant', 'mom'], peaks_data_dict, ibis_data_dict, best_ibis_ch_dict):
     """
     Analyze missing peaks in the best IBI channel per subject compared to other channels.
@@ -319,19 +318,19 @@ def analyze_missing_peaks(participant: Literal['infant', 'mom'], peaks_data_dict
             print(f"Warning: No peak data for  {subj_id} best ch {best_ch} .")
 
             continue  # skip if no data for best channel
-       
+
         # Validate IBI matches difference of peaks
         inferred_ibi = np.diff(best_ch_peak_data)
         min_len = min(len(best_ch_ibi_data), len(inferred_ibi))
         if not np.allclose(best_ch_ibi_data[:min_len], inferred_ibi[:min_len], atol=1e-3):
+        # if not np.allclose(best_ch_ibi_data[:len(best_ch_ibi_data)], inferred_ibi[:len(inferred_ibi)]):
             print(f"Warning: IBI data for {subj_id} channel {best_ch} does not match peak differences.")
             continue
 
-        
         missing_peaks = analyze_missing_peaks_intervals(best_ch_peak_data, peaks_channels, best_ch)
         
         report[subj_id] = missing_peaks
-        print(f'sub {subj_id} best ch {best_ch}: {report[subj_id]}')
+        print(f'sub {subj_id} best {best_ch} md {np.median(best_ch_ibi_data)} th {(np.median(best_ch_ibi_data))*0.5 }: {report[subj_id]}')
     
     return report
 
@@ -341,7 +340,7 @@ def analyze_missing_peaks_intervals(best_ch_peak_data, peaks_channels, best_ch):
     best_peaks = np.array(best_ch_peak_data)
     best_ibis = np.diff(best_peaks)
     median_ibi = np.median(best_ibis)
-    threshold = median_ibi 
+    threshold = median_ibi* 0.5 
 
 
     other_channels = {ch: peaks for ch, peaks in peaks_channels.items() if ch != best_ch}
@@ -350,47 +349,98 @@ def analyze_missing_peaks_intervals(best_ch_peak_data, peaks_channels, best_ch):
     start_time = best_peaks[0]
     for ch_name, ch_peaks in other_channels.items():
         ch_peaks = np.array(ch_peaks)
-        before_start_peaks = ch_peaks[(ch_peaks < start_time) & (ch_peaks >= start_time - threshold)]
+        before_start_peaks = ch_peaks[(ch_peaks <= start_time - threshold)]
+
         if len(before_start_peaks) > 0:
-            missing_peaks_report.setdefault('before_start', {})[ch_name] = before_start_peaks.tolist()
+            extended_peaks_before_start = []
+            for p in before_start_peaks:
+                # Add the current peak
+                extended_peaks_before_start.append(int(p))
+
+                # Find index of this peak in ch_peaks
+                idx = np.where(ch_peaks == p)[0][0]
+
+                # Add the next peak (if it exists)
+                if idx < len(ch_peaks) - 1:
+                    extended_peaks_before_start.append(int(ch_peaks[idx + 1]))
+
+            # Remove duplicates and sort
+            extended_peaks_before_start = sorted(list(set(extended_peaks_before_start)))
+
+            missing_peaks_report.setdefault('before_start', {
+                'best_channel_peaks': [int(start_time)]
+            })[ch_name] = extended_peaks_before_start
 
     # Check peaks after the last peak in best channel
     end_time = best_peaks[-1]
     for ch_name, ch_peaks in other_channels.items():
         ch_peaks = np.array(ch_peaks)
-        after_end_peaks = ch_peaks[(ch_peaks > end_time) & (ch_peaks <= end_time + threshold)]
+        after_end_peaks = ch_peaks[ch_peaks >= end_time + threshold]
+
         if len(after_end_peaks) > 0:
+            extended_peaks_after_end = []
+
+            for p in after_end_peaks:
+                # Find index of this peak in the original channel array
+                idx = np.where(ch_peaks == p)[0][0]
+
+                # Add the previous peak (if it exists)
+                if idx > 0:
+                    extended_peaks_after_end.append(int(ch_peaks[idx - 1]))
+
+                # Add the current peak
+                extended_peaks_after_end.append(int(p))
+
+            # Remove duplicates and sort
+            extended_peaks_after_end = sorted(list(set(extended_peaks_after_end)))
+
             missing_peaks_report.setdefault('after_end', {
-                'best_channel': best_ch,
                 'best_channel_peaks': [int(end_time)],
-                'situation': 'Peaks detected after last best-channel peak.'
-            })[ch_name] = [int(p) for p in after_end_peaks]
+            })[ch_name] = extended_peaks_after_end
 
     # Existing interval checking for missing peaks inside intervals
     for ibi_idx in range(len(best_ibis)):
         interval_start = best_peaks[ibi_idx]
         interval_end = best_peaks[ibi_idx + 1]
         missing_per_ch = {}
+
         for ch_name, ch_peaks in other_channels.items():
             ch_peaks = np.array(ch_peaks)
             peaks_in_interval = ch_peaks[(ch_peaks > interval_start) & (ch_peaks < interval_end)]
+
+            # Select peaks that are not too close to the edges
             important_peaks = [pt for pt in peaks_in_interval
-                               if (pt - interval_start) > threshold and (interval_end - pt) > threshold]
+                            if (pt - interval_start) > threshold and (interval_end - pt) > threshold]
+
             if important_peaks:
-                missing_per_ch[ch_name] = [int(pt) for pt in important_peaks]
-                
+                extended_peaks = []
+                for pt in important_peaks:
+                    idx = np.where(ch_peaks == pt)[0][0]
+
+                    # Add previous peak (if exists)
+                    if idx > 0:
+                        extended_peaks.append(int(ch_peaks[idx - 1]))
+
+                    # Add the current peak
+                    extended_peaks.append(int(pt))
+
+                    # Add following peak (if exists)
+                    if idx < len(ch_peaks) - 1:
+                        extended_peaks.append(int(ch_peaks[idx + 1]))
+
+                # Remove duplicates and sort
+                extended_peaks = sorted(list(set(extended_peaks)))
+
+                missing_per_ch[ch_name] = extended_peaks
+
         if missing_per_ch:
             # Gather best channel reference info
             best_peaks_in_interval = [int(p) for p in best_peaks
-                                      if interval_start <= p <= interval_end]
-            situation = f"Best channel ({best_ch}) has {len(best_peaks_in_interval)} peaks in this interval."
+                                    if interval_start <= p <= interval_end]
 
             missing_peaks_report[ibi_idx] = {
-                'best_channel': best_ch,
                 'best_channel_peaks': best_peaks_in_interval,
-                'situation': situation,
                 'other_channels': missing_per_ch
-            }
-
-
+        }
     return missing_peaks_report
+

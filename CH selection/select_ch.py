@@ -9,11 +9,11 @@ from best_ch_pipline import *
 
 # ---- Load Pickles ---------------------------
 
-pickle_path_9m_ibis = Path("C:\\Users\\ninab36\\python code\\Files data\\01_ibi_after_extraction_ibis_data.pkl")
-# pickle_path_9m_ibis = Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl')
+# pickle_path_9m_ibis = Path("C:\\Users\\ninab36\\python code\\Files data\\01_ibi_after_extraction_ibis_data.pkl")
+pickle_path_9m_ibis = Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl')
 
-pickle_path_9_month_peaks = Path("C:\\Users\\ninab36\\python code\\Files data\\01_ibi_after_extraction_peaks_data.pkl")
-# pickle_path_9_month_peaks = Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl')
+# pickle_path_9_month_peaks = Path("C:\\Users\\ninab36\\python code\\Files data\\01_ibi_after_extraction_peaks_data.pkl")
+pickle_path_9_month_peaks = Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_peaks_data.pkl')
 
 with open(pickle_path_9m_ibis, "rb") as f_ibis:
     ibis_data_9m = pickle.load(f_ibis)
