@@ -444,3 +444,36 @@ def analyze_missing_peaks_intervals(best_ch_peak_data, peaks_channels, best_ch):
         }
     return missing_peaks_report
 
+
+def summarize_missing_peaks(participant, peaks_data_dict, ibis_data_dict, best_ibis_ch_dict):
+    report = analyze_missing_peaks(participant, peaks_data_dict, ibis_data_dict, best_ibis_ch_dict)
+    summary_rows = []
+
+    for subj_id, missing_info in report.items():
+        best_ch = best_ibis_ch_dict.get(subj_id)
+
+        # Recompute median and threshold
+        ibis_channels = ibis_data_dict[subj_id][participant]
+        best_ch_ibi_data = ibis_channels[best_ch]['data']
+        median_best_ch = np.median(best_ch_ibi_data)
+        threshold = median_best_ch * 0.5
+
+        # Count peaks in each category
+        peaks_before_start = len(missing_info.get('before_start', {})) - 1 if 'before_start' in missing_info else 0
+        peaks_after_end = len(missing_info.get('after_end', {})) - 1 if 'after_end' in missing_info else 0
+        peaks_between_ibis = sum(
+            len(v['other_channels']) for k, v in missing_info.items() if isinstance(k, int)
+        )
+
+        summary_rows.append({
+            'subject_id': subj_id,
+            'best_channel': best_ch,
+            'median_best_channel': median_best_ch,
+            'threshold': threshold,
+            'Peaks before start': peaks_before_start,
+            'Peaks between ibis': peaks_between_ibis,
+            'Peaks after end': peaks_after_end
+        })
+
+    df = pd.DataFrame(summary_rows)
+    return df

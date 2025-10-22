@@ -57,3 +57,7 @@ output_path = "best_channels_summary.xlsx"
 
 # ---- Analyze missing peaks for best ibis channels ---------------------------
 infant_9m_toys_missing_peaks = analyze_missing_peaks('infant', peaks_toys_9m_infants_data, ibis_toys_9m_infants_data, best_ch_infant_9m_toys)
+
+# Example usage:
+# df_results_infant_9m_toys = summarize_missing_peaks('infant', peaks_toys_9m_infants_data, ibis_toys_9m_infants_data, best_ch_infant_9m_toys)
+# df_results_infant_9m_toys.to_csv('missing_peaks_summary.csv', index=False)
