@@ -50,7 +50,7 @@ df_mom_9m_no_toys, dict_data_mom_9m_no_toys, best_ch_mom_9m_no_toys = build_best
 
 # infant_9m_toys_new_best_ch = analyze_missing_peaks('infant', peaks_toys_9m_infants_data, ibis_toys_9m_infants_data,best_ch_infant_9m_toys, True)
 
-infant_9m_toys_new_best_ch = build_refined_best_channels_dict(ibis_toys_9m_infants_data, peaks_toys_9m_infants_data, 'infant')
+# infant_9m_toys_new_best_ch = build_refined_best_channels_dict(ibis_toys_9m_infants_data, peaks_toys_9m_infants_data, 'infant')
 # Save all DataFrames into one Excel file (each as a separate sheet)
 output_path = "best_channels_summary.xlsx"
 

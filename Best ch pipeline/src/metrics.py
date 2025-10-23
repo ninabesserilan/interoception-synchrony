@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Literal
 
-def compute_metrics(ibis_ms, participant: Literal['mom', 'infant']):
+def compute_metrics(ibis_ms, participant: Literal['mom', 'infant'], infant_ibis_th =600, mom_ibis_th = 1000):
     """
     Compute key IBI and HRV metrics for one channel.
     Returns dictionary with metrics.
@@ -17,11 +17,10 @@ def compute_metrics(ibis_ms, participant: Literal['mom', 'infant']):
 
     # Thresholds per participant type
     if participant == 'infant':
-        long_ibi_threshold = 600
+        long_ibi_threshold = infant_ibis_th
     else:
-        long_ibi_threshold = 1000
+        long_ibi_threshold = mom_ibis_th
 
-    diffs = np.diff(ibis)
     return {
         "sdrr": np.std(ibis, ddof=1),
         "long_ibi_count": np.sum(ibis > long_ibi_threshold),

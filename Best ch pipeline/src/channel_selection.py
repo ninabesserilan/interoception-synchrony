@@ -10,14 +10,12 @@ import pandas as pd
 # Build summary DataFrame
 # -----------------------------
 def channel_selection(ibis_data_dict, participant: Literal['mom', 'infant'], 
-                          short_channel_pct=0.9, weights=None):
+                          short_channel_pct= 0.85, weights=None, infant_ibis_th =600, mom_ibis_th = 1000):
     """
     Build a summary DataFrame with channels ordered by rank (best → medium → worst),
     and columns ordered by parameter type: length → median → sdrr → long_ibi_count → mean.
     """
     data_dic = {}
-
-    best_ibis_ch_dict = {}
 
 
     for subj_id, subj_data in ibis_data_dict.items():
@@ -30,7 +28,7 @@ def channel_selection(ibis_data_dict, participant: Literal['mom', 'infant'],
                 ibis_channels[ch_key] = sub_data[ch_key]['data']
 
         # Select best channel + ranks
-        best_ch, results = select_best_channel(ibis_channels, participant, short_channel_pct, weights)
+        best_ch, results = select_best_channel(ibis_channels, participant, short_channel_pct, weights, infant_ibis_th =600, mom_ibis_th = 1000)
         row = {"subject_id": subj_id}
 
 
@@ -51,8 +49,6 @@ def channel_selection(ibis_data_dict, participant: Literal['mom', 'infant'],
             else:
                 row[f"{label}_channel"] = None
 
-        # Store best channel for this subject
-        best_ibis_ch_dict[subj_id] = best_ch
 
         # Add metrics and length/mean/median for each label
         for i, label in enumerate(labels):
@@ -85,11 +81,11 @@ def channel_selection(ibis_data_dict, participant: Literal['mom', 'infant'],
     extra_cols = [c for c in df.columns if c not in column_order]
     df = df[column_order + extra_cols]
 
-    return df, data_dic, best_ibis_ch_dict
+    return df, data_dic
 
 
 def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'],
-                        short_channel_pct=0.9, weights=None):
+                        short_channel_pct=0.9, weights=None, infant_ibis_th =600, mom_ibis_th = 1000):
     """
     Select the best channel for a participant, keeping invalid (too short) channels
     but ranking them automatically as the worst.
@@ -109,7 +105,7 @@ def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'],
     # Compute metrics for all channels
     metrics_per_ch = {}
     for ch in all_channels:
-        metrics = compute_metrics(ibis_channels[ch], participant)
+        metrics = compute_metrics(ibis_channels[ch], participant, infant_ibis_th =600, mom_ibis_th = 1000)
         metrics['length'] = n_ibis[ch]
         metrics['invalid'] = not valid_flags[ch]
         metrics_per_ch[ch] = metrics
