@@ -9,8 +9,8 @@ import pandas as pd
 # -----------------------------
 # Build summary DataFrame
 # -----------------------------
-def channel_selection(ibis_data_dict, participant: Literal['mom', 'infant'], 
-                          short_channel_pct= 0.85, weights=None, infant_ibis_th =600, mom_ibis_th = 1000):
+def channel_selection(ibis_data_dict:dict, participant: Literal['mom', 'infant'], 
+                          short_channel_pct:float, weights=None, infant_ibis_th =600, mom_ibis_th = 1000):
     """
     Build a summary DataFrame with channels ordered by rank (best → medium → worst),
     and columns ordered by parameter type: length → median → sdrr → long_ibi_count → mean.
@@ -28,7 +28,7 @@ def channel_selection(ibis_data_dict, participant: Literal['mom', 'infant'],
                 ibis_channels[ch_key] = sub_data[ch_key]['data']
 
         # Select best channel + ranks
-        best_ch, results = select_best_channel(ibis_channels, participant, short_channel_pct, weights, infant_ibis_th =600, mom_ibis_th = 1000)
+        best_ch, results = select_best_channel(ibis_channels, participant, short_channel_pct, weights, infant_ibis_th, mom_ibis_th)
         row = {"subject_id": subj_id}
 
 
@@ -85,7 +85,7 @@ def channel_selection(ibis_data_dict, participant: Literal['mom', 'infant'],
 
 
 def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'],
-                        short_channel_pct=0.9, weights=None, infant_ibis_th =600, mom_ibis_th = 1000):
+                        short_channel_pct:float, weights=None, infant_ibis_th =600, mom_ibis_th = 1000):
     """
     Select the best channel for a participant, keeping invalid (too short) channels
     but ranking them automatically as the worst.
@@ -105,10 +105,30 @@ def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'],
     # Compute metrics for all channels
     metrics_per_ch = {}
     for ch in all_channels:
-        metrics = compute_metrics(ibis_channels[ch], participant, infant_ibis_th =600, mom_ibis_th = 1000)
+        metrics = compute_metrics(ibis_channels[ch], participant, infant_ibis_th, mom_ibis_th)
         metrics['length'] = n_ibis[ch]
         metrics['invalid'] = not valid_flags[ch]
         metrics_per_ch[ch] = metrics
+
+
+    # Collect all non-NaN long_ibi_count values
+    long_ibi_counts = [
+        metrics_per_ch[ch]['long_ibi_count']
+        for ch in metrics_per_ch
+        if not np.isnan(metrics_per_ch[ch]['long_ibi_count'])
+    ]
+
+    # If we have at least 2 valid counts, compute relative variability
+    if len(long_ibi_counts) >= 2:
+        cv = np.std(long_ibi_counts) / np.mean(long_ibi_counts)  # coefficient of variation
+
+        # If long_ibi_count values are similar (<10% variability),
+        # give more weight to SDRR and less to long_ibi_count
+        if cv < 0.10:
+            weights = {'sdrr': 2.0, 'long_ibi_count': 1.0}        
+
+        else:
+            weights = {'sdrr': 1.0, 'long_ibi_count': 2.0}
 
 
     # Rank channels

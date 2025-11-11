@@ -50,7 +50,6 @@ def analyze_missing_peaks(participant: Literal['infant', 'mom'], peaks_data_dict
         inferred_ibi = np.diff(best_ch_peak_data)
         min_len = min(len(best_ch_ibi_data), len(inferred_ibi))
         if not np.allclose(best_ch_ibi_data[:min_len], inferred_ibi[:min_len], atol=1e-3):
-        # if not np.allclose(best_ch_ibi_data[:len(best_ch_ibi_data)], inferred_ibi[:len(inferred_ibi)]):
             print(f"Warning: IBI data for {subj_id} channel {best_ch} does not match peak differences.")
             continue
 

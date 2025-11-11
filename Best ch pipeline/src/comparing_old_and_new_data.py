@@ -44,4 +44,9 @@ pickle_path = '/Users/nina/Desktop/University of Vienna/PhD projects/python code
 with open(pickle_path, "rb") as f_data:
     data = pickle.load(f_data)
 
-df = compare_best_channel_stats(data, 'infant', 'toys')
+# df = compare_best_channel_stats(data, 'infant', 'toys')
+
+data_best_ch_toys_infants = data['toys']['infant']['refined_best_channel_data']['new_ibis_data']['data']
+data_best_ch_toys_moms = data['toys']['mom']['refined_best_channel_data']['new_ibis_data']['data']
+data_best_ch_notoys_infants = data['no_toys']['infant']['refined_best_channel_data']['new_ibis_data']['data']
+data_best_ch_notoys_moms = data['no_toys']['mom']['refined_best_channel_data']['new_ibis_data']['data']

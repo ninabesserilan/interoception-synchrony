@@ -1,8 +1,8 @@
 import pickle
 from pathlib import Path
+from typing import Literal
 
-
-def filter_group_condition(data, group, condition, participant):
+def filter_group_condition(data: dict, group: Literal['9_months', '18_months'], condition: Literal['toys', 'no_toys'], participant: Literal['infant', 'mom']):
     """
     Extract all data for a given group (age) and condition.
     

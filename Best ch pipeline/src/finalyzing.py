@@ -59,15 +59,25 @@ def create_final_data_dict(
         mean_best = np.mean(ibis) if length_best > 0 else np.nan
         sdrr_best = np.std(ibis, ddof=1) if length_best > 1 else np.nan
         long_ibi_count_best = np.sum(ibis > long_ibi_threshold) if length_best > 0 else 0
+        peaks = new_peaks_dict['data'][subj]
+        last_peak_ms_best = peaks.iloc[-1] if len(peaks) > 0 else np.nan
+        session_lenght_sec = last_peak_ms_best/1000
 
         new_ibis_stats[subj] = {
             'best_channel': name_best,
-            'length_best': length_best,
+            'last_peak_ms':last_peak_ms_best,
+            'session_lenght_sec': session_lenght_sec,
+            'length_ibis_ts_best': length_best,
             'median_best': median_best,
             'mean_best': mean_best,
             'sdrr_best': sdrr_best,
             'long_ibi_count_best': long_ibi_count_best
         }
+    # for subj, peaks in new_peaks_dict['data'].items():
+    #     last_peak_ms_best = peaks.iloc[-1]
+      
+
+
     refined_dict['new_ibis_stats'] = new_ibis_stats
 
     final_dict['refined_best_channel_data'] = refined_dict
@@ -78,7 +88,7 @@ def create_final_data_dict(
     ).reset_index().rename(columns={'index': 'subject_id'})
 
     # Reorder columns as desired
-    column_order = ["subject_id", "best_channel", "length_best", "long_ibi_count_best", 
+    column_order = ["subject_id", "best_channel", "session_lenght_sec", "last_peak_ms", "length_ibis_ts_best", "long_ibi_count_best", 
                     "sdrr_best",  "mean_best", "median_best"]
 
     # Keep any extra columns at the end
