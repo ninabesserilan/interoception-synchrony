@@ -21,25 +21,25 @@ df_ch_selection_infant_9m_no_toys, ch_selection_dict_infant_9m_no_toys = channel
 df_ch_selection_mom_9m_no_toys, ch_selection_dict_mom_9m_no_toys = channel_selection(ibis_no_toys_9m_moms_data, "mom", short_channel_pct=0.80,infant_ibis_th =600, mom_ibis_th = 1000)
 
 
-# ---- Insert missing peaks for best ibis channels and creat final dict with original and improved data---------------------------
+# # ---- Insert missing peaks for best ibis channels and creat final dict with original and improved data---------------------------
 
-toys_infant_final_dict, toys_infant_df_new_ibis_stats = create_final_data_dict('infant',peaks_toys_9m_infants_data, ibis_toys_9m_infants_data, ch_selection_dict_infant_9m_toys,infant_ibis_th =600, mom_ibis_th = 1000, median_ibis_percantage_th = 0.75 )
-toys_mom_final_dict, toys_mom_df_new_ibis_stats = create_final_data_dict('mom',peaks_toys_9m_moms_data, ibis_toys_9m_moms_data, ch_selection_dict_mom_9m_toys,infant_ibis_th =600, mom_ibis_th = 1000, median_ibis_percantage_th = 0.75 )
+# toys_infant_final_dict, toys_infant_df_new_ibis_stats = create_final_data_dict('infant',peaks_toys_9m_infants_data, ibis_toys_9m_infants_data, ch_selection_dict_infant_9m_toys,infant_ibis_th =600, mom_ibis_th = 1000, median_ibis_percantage_th = 0.75 )
+# toys_mom_final_dict, toys_mom_df_new_ibis_stats = create_final_data_dict('mom',peaks_toys_9m_moms_data, ibis_toys_9m_moms_data, ch_selection_dict_mom_9m_toys,infant_ibis_th =600, mom_ibis_th = 1000, median_ibis_percantage_th = 0.75 )
 
-notoys_infant_final_dict, notoys_infant_df_new_ibis_stats = create_final_data_dict('infant',peaks_no_toys_9m_infants_data, ibis_no_toys_9m_infants_data, ch_selection_dict_infant_9m_no_toys,infant_ibis_th =600, mom_ibis_th = 1000, median_ibis_percantage_th = 0.75 )
-notoys_mom_final_dict, notoys_infants_df_new_ibis_stats = create_final_data_dict('mom',peaks_no_toys_9m_moms_data, ibis_no_toys_9m_moms_data, ch_selection_dict_mom_9m_no_toys,infant_ibis_th =600, mom_ibis_th = 1000, median_ibis_percantage_th = 0.75 )
+# notoys_infant_final_dict, notoys_infant_df_new_ibis_stats = create_final_data_dict('infant',peaks_no_toys_9m_infants_data, ibis_no_toys_9m_infants_data, ch_selection_dict_infant_9m_no_toys,infant_ibis_th =600, mom_ibis_th = 1000, median_ibis_percantage_th = 0.75 )
+# notoys_mom_final_dict, notoys_infants_df_new_ibis_stats = create_final_data_dict('mom',peaks_no_toys_9m_moms_data, ibis_no_toys_9m_moms_data, ch_selection_dict_mom_9m_no_toys,infant_ibis_th =600, mom_ibis_th = 1000, median_ibis_percantage_th = 0.75 )
 
 # ---- save all data to a new pickle ---------------------------
 
 parent_dir = Path(__file__).resolve().parent.parent
 
-all_data_pickle_output_path = parent_dir / 'all data improved and original chs.pkl'
-new_improved_channel_data = save_all_final_data_pickle(toys_infant_final_dict, toys_mom_final_dict, notoys_infant_final_dict, notoys_mom_final_dict, all_data_pickle_output_path)
+# all_data_pickle_output_path = parent_dir / 'all data improved and original chs.pkl'
+# new_improved_channel_data = save_all_final_data_pickle(toys_infant_final_dict, toys_mom_final_dict, notoys_infant_final_dict, notoys_mom_final_dict, all_data_pickle_output_path)
 
-# # ---- save original and new ibis+peaks ststs df  ---------------------------
+# # # ---- save original and new ibis+peaks ststs df  ---------------------------
 
 # Original
-output_path_original = parent_dir / "original_best_channels_stat.xlsx"
+output_path_original = parent_dir / "original_best_channels_stat - new.xlsx"
 
 with pd.ExcelWriter(output_path_original, engine="openpyxl") as writer:
     df_ch_selection_infant_9m_toys.to_excel(writer, sheet_name="Infant_9m_Toys", index=False)
@@ -48,12 +48,12 @@ with pd.ExcelWriter(output_path_original, engine="openpyxl") as writer:
     df_ch_selection_mom_9m_no_toys.to_excel(writer, sheet_name="Mom_9m_NoToys", index=False)
 
 # New
-output_path_new = parent_dir / "improved_best_channels_stat.xlsx"
+# output_path_new = parent_dir / "improved_best_channels_stat.xlsx"
 
-with pd.ExcelWriter(output_path_new, engine="openpyxl") as writer:
-    toys_infant_df_new_ibis_stats.to_excel(writer, sheet_name="Infant_9m_Toys", index=False)
-    toys_mom_df_new_ibis_stats.to_excel(writer, sheet_name="Mom_9m_Toys", index=False)
-    notoys_infant_df_new_ibis_stats.to_excel(writer, sheet_name="Infant_9m_NoToys", index=False)
-    notoys_infants_df_new_ibis_stats.to_excel(writer, sheet_name="Mom_9m_NoToys", index=False)
+# with pd.ExcelWriter(output_path_new, engine="openpyxl") as writer:
+#     toys_infant_df_new_ibis_stats.to_excel(writer, sheet_name="Infant_9m_Toys", index=False)
+#     toys_mom_df_new_ibis_stats.to_excel(writer, sheet_name="Mom_9m_Toys", index=False)
+#     notoys_infant_df_new_ibis_stats.to_excel(writer, sheet_name="Infant_9m_NoToys", index=False)
+#     notoys_infants_df_new_ibis_stats.to_excel(writer, sheet_name="Mom_9m_NoToys", index=False)
 
 

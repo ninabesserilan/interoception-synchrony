@@ -91,85 +91,30 @@ def select_best_channel(ibis_channels, participant: Literal['mom', 'infant'],
     but ranking them automatically as the worst.
     Works perfectly when you have 3 channels per subject.
     """
-    if weights is None:
-        weights = {'sdrr': 1.0, 'long_ibi_count': 2.0}
 
-    # Compute lengths
+    ### Compute lengths and validity
     n_ibis = {ch: len(np.atleast_1d(ibis)) for ch, ibis in ibis_channels.items()}
     max_len = max(n_ibis.values()) if n_ibis else 0
-
-    # Mark validity
     valid_flags = {ch: (n_ibis[ch] >= short_channel_pct * max_len) for ch in n_ibis}
-    all_channels = list(n_ibis.keys())
 
-    # Compute metrics for all channels
+    ### Compute metrics for all channels
     metrics_per_ch = {}
-    for ch in all_channels:
+    for ch in ibis_channels:
         metrics = compute_metrics(ibis_channels[ch], participant, infant_ibis_th, mom_ibis_th)
         metrics['length'] = n_ibis[ch]
         metrics['invalid'] = not valid_flags[ch]
         metrics_per_ch[ch] = metrics
 
-
-    # Collect all non-NaN long_ibi_count values
-    long_ibi_counts = [
-        metrics_per_ch[ch]['long_ibi_count']
-        for ch in metrics_per_ch
-        if not np.isnan(metrics_per_ch[ch]['long_ibi_count'])
-    ]
-
-    # If we have at least 2 valid counts, compute relative variability
-    if len(long_ibi_counts) >= 2:
-        cv = np.std(long_ibi_counts) / np.mean(long_ibi_counts)  # coefficient of variation
-
-        # If long_ibi_count values are similar (<10% variability),
-        # give more weight to SDRR and less to long_ibi_count
-        if cv < 0.10:
-            weights = {'sdrr': 2.0, 'long_ibi_count': 1.0}        
-
-        else:
-            weights = {'sdrr': 1.0, 'long_ibi_count': 2.0}
-
-
-    # Rank channels
-    best_ch, ranks, total_ranks = rank_channels(metrics_per_ch, weights)
-
-    # -----------------------------
-    # Handle invalid channel logic
-    # -----------------------------
+    ### Extreact valid and invalid channels 
     invalid_channels = [ch for ch, m in metrics_per_ch.items() if m.get('invalid', False)]
     valid_channels = [ch for ch in metrics_per_ch.keys() if ch not in invalid_channels]
 
-    if len(invalid_channels) == 0:
-        # All valid → regular ranking, do nothing special
-        pass
 
-    elif len(invalid_channels) == 1:
-        # One invalid → it's automatically worst
-        worst_ch = invalid_channels[0]
-        total_ranks[worst_ch] = max(total_ranks.values()) + 1
-        if best_ch == worst_ch:
-            # Find valid channel with lowest total rank
-            valid_ranks = {ch: total_ranks[ch] for ch in valid_channels if ch in total_ranks}
-            if valid_ranks:
-                best_ch = min(valid_ranks, key=valid_ranks.get)
+    ### Rank channels    
+    best_ch, weighted_ranks, total_ranks = rank_channels(metrics_per_ch,  invalid_channels, valid_channels, weights)
 
-
-    elif len(invalid_channels) == 2:
-        # Two invalid → valid is automatically best
-        best_ch = valid_channels[0]
-        total_ranks[best_ch] = min(total_ranks.values()) - 1
-
-        # Re‑rank the two invalids among themselves
-        _, ranks_invalid, total_invalid = rank_channels(
-            {ch: metrics_per_ch[ch] for ch in invalid_channels}, weights
-        )
-
-        max_rank = max(total_ranks.values())
-        for i, (ch, rank_val) in enumerate(sorted(total_invalid.items(), key=lambda x: x[1])):
-            total_ranks[ch] = max_rank + i + 1
     return best_ch, {
         "metrics": metrics_per_ch,
-        "ranks": ranks,
+        "ranks": weighted_ranks,
         "total_ranks": total_ranks
     }
