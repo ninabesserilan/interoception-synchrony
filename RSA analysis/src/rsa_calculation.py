@@ -24,8 +24,8 @@ def clean_array(arr: List[pd.Series], sub_id, participant, ibi_value_th):
     # Count values above the threshold
     num_above = sum(v >= ibi_value_th for v in values)
 
-    # if num_above > 0:
-    #     print(f" {num_above} values >= {ibi_value_th} detected for {sub_id}, {participant}")
+    if num_above > 0:
+        print(f" {num_above} values >= {ibi_value_th} detected for {sub_id}, {participant}")
     
     return list(filter(lambda n: n < ibi_value_th, arr))
 
@@ -74,8 +74,8 @@ def calculate_rsa(valid_sample:dict,  ibi_value_th:int,require_partner=True):
                 if ts is None:
                     rsa_dict[condition][sub_id][p] = {}
                 else:
-                    ibi_ts = clean_array(list(pd.Series(ts)), sub_id, p, ibi_value_th)
-                    # print(f"condition: {condition}, sub_id: {sub_id}")
+                    # ibi_ts = clean_array(list(pd.Series(ts)), sub_id, p, ibi_value_th)
+                    ibi_ts = list(pd.Series(ts))
                     validate_array(ibi_ts)
                     rsa_dict[condition][sub_id][p] = rsa_time_series(
                         ibi_ms=ibi_ts,

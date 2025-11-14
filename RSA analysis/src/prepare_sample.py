@@ -5,7 +5,7 @@ import numpy as np
 from pathlib import Path
 import pickle
 
-def prepare_sample_for_analysis(data: dict, min_session_length_sec, missing_ibis_prop=0.20,
+def prepare_sample_for_analysis(data: dict, min_session_length_sec, min_sdrr, missing_ibis_prop=0.20
 ):
 
 
@@ -24,7 +24,8 @@ def prepare_sample_for_analysis(data: dict, min_session_length_sec, missing_ibis
             excluded_subs = exclude_invalid_subs(
                 subs_stat,
                 missing_ibis_prop,
-                min_session_length_sec
+                min_session_length_sec,
+                min_sdrr
             )
 
             # Filter out excluded subjects from data
@@ -45,35 +46,56 @@ def prepare_sample_for_analysis(data: dict, min_session_length_sec, missing_ibis
     
 
 
-def exclude_invalid_subs(subs_stat: dict, missing_ibis_prop: float, min_session_length_sec:None):
+def exclude_invalid_subs(
+        subs_stat: dict, 
+        missing_ibis_prop: float, 
+        min_session_length_sec: None,
+        sdrr_threshold=None   # ← NEW
+    ):
         
-        excluded_subs = {}
+    excluded_subs = {}
 
-        if min_session_length_sec == None:
-        
-            median_session_length = np.median([v['session_lenght_sec'] for v in subs_stat.values()])
-            min_session_length = 0.50 * median_session_length
-            min_length_criteria = f"half the median length ({min_session_length:.2f}s)"
-        
-        else:
-            min_session_length = min_session_length_sec
-            min_length_criteria = f'{min_session_length_sec} sec'
+    # -------- Session length exclusion --------
+    if min_session_length_sec is None:
+        median_session_length = np.median([v['session_lenght_sec'] for v in subs_stat.values()])
+        min_session_length = 0.50 * median_session_length
+        min_length_criteria = f"half the median length ({min_session_length:.2f}s)"
+    else:
+        min_session_length = min_session_length_sec
+        min_length_criteria = f'{min_session_length_sec} sec'
 
-        for sub, stat_data in subs_stat.items():
-            if stat_data['session_lenght_sec'] < min_session_length:
-                reason = f"Session length ({stat_data['session_lenght_sec']:.2f}s) is shorter than {min_length_criteria}"
-                # print(f"Warning: {sub} -> {reason}")
-                excluded_subs[sub] = reason
-            
+    for sub, stat_data in subs_stat.items():
+        if stat_data['session_lenght_sec'] < min_session_length:
+            reason = (
+                f"Session length ({stat_data['session_lenght_sec']:.2f}s) is shorter "
+                f"than {min_length_criteria}"
+            )
+            excluded_subs[sub] = reason
+    
+    # -------- Missing IBI exclusion --------
+    for sub, stat_data in subs_stat.items():
+        if sub in excluded_subs:
+            continue
+        if stat_data['long_ibi_count'] >= missing_ibis_prop * stat_data['length_ibis_ts']:
+            reason = (
+                f"Long IBI count ({stat_data['long_ibi_count']}) exceeds "
+                f"{missing_ibis_prop*100:.0f}% of series length ({stat_data['length_ibis_ts']})"
+            )
+            excluded_subs[sub] = reason
+
+    # -------- SDRR exclusion (NEW) --------
+    if sdrr_threshold is not None:
         for sub, stat_data in subs_stat.items():
             if sub in excluded_subs:
-                continue  # already excluded for another reason
-            if stat_data['long_ibi_count'] >= missing_ibis_prop * stat_data['length_ibis_ts']:
-                reason = f"Long IBI count ({stat_data['long_ibi_count']}) exceeds {missing_ibis_prop*100:.0f}% of series length ({stat_data['length_ibis_ts']})"
-                # print(f"Warning: {sub} -> {reason}")
+                continue
+            if stat_data['sdrr'] > sdrr_threshold:
+                reason = (
+                    f"SDRR ({stat_data['sdrr']:.2f}) exceeds threshold "
+                    f"({sdrr_threshold})"
+                )
                 excluded_subs[sub] = reason
 
-        return excluded_subs
+    return excluded_subs
 
                   
 

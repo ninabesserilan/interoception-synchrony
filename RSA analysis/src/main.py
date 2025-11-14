@@ -12,25 +12,32 @@ from rsa_calculation import calculate_rsa, exclude_unmatched_pairs
 from excluded_subs_data import excluded_subs_data
 
 
-valid_sample, excluded_subs = prepare_sample_for_analysis(data_dict, min_session_length_sec= 60, missing_ibis_prop=0.20)
+valid_sample, excluded_subs = prepare_sample_for_analysis(data_dict, min_session_length_sec= 60 , min_sdrr = 200, missing_ibis_prop=0.20)
 # a, b= exclude_unmatched_pairs(valid_sample)
-rsa_dict, excluded_unmatched_subs = calculate_rsa(valid_sample, require_partner= True, ibi_value_th = 3000)
+rsa_dict, excluded_unmatched_subs = calculate_rsa(valid_sample, require_partner= True, ibi_value_th = 70000)
 
 toys_dyad_num = len(rsa_dict['toys'].keys())      # 68
 notoys_dyad_num = len(rsa_dict['no_toys'].keys()) #57
 
 # Building united excluded subs data frame
 
+parent_dir = Path(__file__).resolve().parent.parent
 
 final_excluded_df_toys_infant,final_excluded_df_toys_mom, final_excluded_df_notoys_infant, final_excluded_df_notoys_mom = excluded_subs_data(excluded_subs, excluded_unmatched_subs, data_dict)
+pickle_path = parent_dir/'rsa_pickle.pkl'
 
-parent_dir = Path(__file__).resolve().parent.parent
+with open(pickle_path, "wb") as f:
+        pickle.dump(rsa_dict, f)
+
+print(f"All data saved to {pickle_path}")
+
+
 
 output_path_original = parent_dir / "All excluded subs.xlsx"
 
 with pd.ExcelWriter(output_path_original, engine="openpyxl") as writer:
-    final_excluded_df_toys_infant.to_excel(writer, sheet_name="Infant_9m_Toys", index=False)
-    final_excluded_df_toys_mom.to_excel(writer, sheet_name="Mom_9m_Toys", index=False)
-    final_excluded_df_notoys_infant.to_excel(writer, sheet_name="Infant_9m_NoToys", index=False)
-    final_excluded_df_notoys_mom.to_excel(writer, sheet_name="Mom_9m_NoToys", index=False)
+    final_excluded_df_toys_infant.to_excel(writer, sheet_name="Infant_9m_Toys", index=True)
+    final_excluded_df_toys_mom.to_excel(writer, sheet_name="Mom_9m_Toys", index=True)
+    final_excluded_df_notoys_infant.to_excel(writer, sheet_name="Infant_9m_NoToys", index=True)
+    final_excluded_df_notoys_mom.to_excel(writer, sheet_name="Mom_9m_NoToys", index=True)
 
