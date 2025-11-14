@@ -13,11 +13,10 @@ from excluded_subs_data import excluded_subs_data
 
 
 valid_sample, excluded_subs = prepare_sample_for_analysis(data_dict, min_session_length_sec= 60 , min_sdrr = 200, missing_ibis_prop=0.20)
-# a, b= exclude_unmatched_pairs(valid_sample)
 rsa_dict, excluded_unmatched_subs = calculate_rsa(valid_sample, require_partner= True, ibi_value_th = 70000)
 
-toys_dyad_num = len(rsa_dict['toys'].keys())      # 68
-notoys_dyad_num = len(rsa_dict['no_toys'].keys()) #57
+toys_dyad_num = len(rsa_dict['toys'].keys())      
+notoys_dyad_num = len(rsa_dict['no_toys'].keys()) 
 
 # Building united excluded subs data frame
 
