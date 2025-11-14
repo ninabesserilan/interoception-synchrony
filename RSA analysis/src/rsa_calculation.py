@@ -1,3 +1,4 @@
+from typing import List
 from sync import rsa_magnitude, rsa_per_epoch, rsa_time_series, epochs_synchrony, cross_correlation_zlc, multimodal_synchrony
 import numpy as np
 import pandas as pd
@@ -6,10 +7,30 @@ import numpy as np
 from pathlib import Path
 import pickle
 
+def validate_array(arr: List[pd.Series]):
+    for val in arr:
+        if np.isinf(val) or np.isnan(val):
+            print("ERROROROROROR")
+
+def clean_array(arr: List[pd.Series], sub_id, participant, ibi_value_th):
+    # Flatten arr in case it contains pd.Series elements
+    values = []
+    for x in arr:
+        if isinstance(x, pd.Series):
+            values.extend(x.tolist())
+        else:
+            values.append(x)
+
+    # Count values above the threshold
+    num_above = sum(v >= ibi_value_th for v in values)
+
+    # if num_above > 0:
+    #     print(f" {num_above} values >= {ibi_value_th} detected for {sub_id}, {participant}")
+    
+    return list(filter(lambda n: n < ibi_value_th, arr))
 
 
-
-def calculate_rsa(valid_sample:dict, require_partner=True):
+def calculate_rsa(valid_sample:dict,  ibi_value_th:int,require_partner=True):
     """
     Full pipeline to calculate RSA time series for infant-mom pairs.
     
@@ -48,14 +69,16 @@ def calculate_rsa(valid_sample:dict, require_partner=True):
                 if sub_id not in rsa_dict[condition]:
                     rsa_dict[condition][sub_id] = {}
                 age_type = 'infant' if p == 'infant' else 'adult'
-                print(pd.Series(ts))
+                # print(pd.Series(ts))
                 
                 if ts is None:
                     rsa_dict[condition][sub_id][p] = {}
                 else:
-                    ibi_ts = pd.Series(ts)
+                    ibi_ts = clean_array(list(pd.Series(ts)), sub_id, p, ibi_value_th)
+                    # print(f"condition: {condition}, sub_id: {sub_id}")
+                    validate_array(ibi_ts)
                     rsa_dict[condition][sub_id][p] = rsa_time_series(
-                        ibi_ms=list(ibi_ts),
+                        ibi_ms=ibi_ts,
                         rsa_method='abbney',
                         age_type=age_type
                     )
