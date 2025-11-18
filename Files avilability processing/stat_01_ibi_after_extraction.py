@@ -6,7 +6,9 @@ from pathlib import Path
 from stat_01_peaks_ibi_after_extraction import channels_lengh_peaks
 ### ibis Data Anlysis - 50 dyads ###
 
-pickle_path = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl")
+pickle_path = Path("C:\\Users\\ninab36\\python code\\Files data\\01_ibi_after_extraction_ibis_data.pkl")
+# pickle_path = Path("/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Files data/01_ibi_after_extraction_ibis_data.pkl")
+
 with open(pickle_path, "rb") as f_ibis:
     ibis_data = pickle.load(f_ibis)
 
