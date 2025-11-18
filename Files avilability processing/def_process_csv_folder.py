@@ -2,7 +2,7 @@ import os
 import pickle
 import pandas as pd
 
-def process_csv_folder(folder_path, config, output_prefix, save_pickles=True):
+def process_csv_folder(folder_path, config, output_prefix, save_pickles=True, save_path = None):
     
     """
     Process CSV files in a folder into a nested dictionary and save as pickle.
@@ -86,7 +86,10 @@ def process_csv_folder(folder_path, config, output_prefix, save_pickles=True):
 
     # --- Save pickle files if requested ---
     if save_pickles:
-        full_pickle = f"{output_prefix}.pkl"
+        if save_path is not None:
+            full_pickle = save_path/f"{output_prefix}.pkl"
+        else:
+            full_pickle = f"{output_prefix}.pkl"
         with open(full_pickle, "wb") as pickle_file:
             pickle.dump(data_dict, pickle_file)
         print(f"Saved all data to {full_pickle} ({total_files} files processed, {skipped_files} skipped).")
@@ -95,7 +98,12 @@ def process_csv_folder(folder_path, config, output_prefix, save_pickles=True):
         if "data_type" in config:
             for subset in config["data_type"].keys():
                 if subset in data_dict:
-                    subset_pickle = f"{config["analysis_stage"]}_{subset}_data.pkl"
+                    subset_filename = f"{config['analysis_stage']}_{subset}_data.pkl"
+                    # build full path depending on save_path
+                    if save_path is not None:
+                        subset_pickle = save_path / subset_filename
+                    else:
+                        subset_pickle = subset_filename
                     with open(subset_pickle, "wb") as f_subset:
                         pickle.dump(data_dict[subset], f_subset)
                     count = data_type_counts.get(subset, 0)
