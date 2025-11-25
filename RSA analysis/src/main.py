@@ -10,9 +10,24 @@ from data_loader import data_dict
 from prepare_sample import prepare_sample_for_analysis
 from rsa_calculation import calculate_rsa, exclude_unmatched_pairs
 from excluded_subs_data import excluded_subs_data
+from ibis_interpolation import apply_gap_filling_to_data_dict
 
 
-valid_sample, excluded_subs = prepare_sample_for_analysis(data_dict, min_session_length_sec= 60 , min_sdrr = 200, missing_ibis_prop=0.20)
+parent_dir = Path(__file__).resolve().parent.parent
+
+is_interpolation = True
+
+if is_interpolation:
+
+        interpolation_pickle_output_path = parent_dir / 'Improved best ch after interpolation.pkl'
+
+        intrpolat_ibi = apply_gap_filling_to_data_dict(data_dict, factor=2, infant_ibis_th =600, mom_ibis_th = 1000, save_path=interpolation_pickle_output_path)
+        
+        sample_for_analyis = intrpolat_ibi
+else:
+        sample_for_analyis = data_dict
+
+valid_sample, excluded_subs = prepare_sample_for_analysis(sample_for_analyis, min_session_length_sec= 60 , min_sdrr = 200, is_interpolation = is_interpolation, missing_ibis_prop=0.20)
 rsa_dict, excluded_unmatched_subs = calculate_rsa(valid_sample, require_partner= True, ibi_value_th = 70000)
 
 toys_dyad_num = len(rsa_dict['toys'].keys())      
@@ -20,10 +35,18 @@ notoys_dyad_num = len(rsa_dict['no_toys'].keys())
 
 # Building united excluded subs data frame
 
-parent_dir = Path(__file__).resolve().parent.parent
+if is_interpolation:
+       rsa_pickle_name = 'rsa_pickle_ibis_interpolation.pkl'
+       excluded_sub_name = "All excluded subs after ibis interpolation.xlsx"
+else:
+        rsa_pickle_name = 'rsa_pickle.pkl'
+        excluded_sub_name = "All excluded subs.xlsx"
 
-final_excluded_df_toys_infant,final_excluded_df_toys_mom, final_excluded_df_notoys_infant, final_excluded_df_notoys_mom = excluded_subs_data(excluded_subs, excluded_unmatched_subs, data_dict)
-pickle_path = parent_dir/'rsa_pickle.pkl'
+
+
+
+final_excluded_df_toys_infant,final_excluded_df_toys_mom, final_excluded_df_notoys_infant, final_excluded_df_notoys_mom = excluded_subs_data(excluded_subs, excluded_unmatched_subs, sample_for_analyis)
+pickle_path = parent_dir/rsa_pickle_name
 
 with open(pickle_path, "wb") as f:
         pickle.dump(rsa_dict, f)
@@ -32,7 +55,7 @@ print(f"All data saved to {pickle_path}")
 
 
 
-output_path_original = parent_dir / "All excluded subs.xlsx"
+output_path_original = parent_dir / excluded_sub_name
 
 with pd.ExcelWriter(output_path_original, engine="openpyxl") as writer:
     final_excluded_df_toys_infant.to_excel(writer, sheet_name="Infant_9m_Toys", index=True)

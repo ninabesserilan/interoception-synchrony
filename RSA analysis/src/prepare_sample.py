@@ -4,28 +4,42 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import pickle
+import copy
 
-def prepare_sample_for_analysis(data: dict, min_session_length_sec, min_sdrr, missing_ibis_prop=0.20
+def prepare_sample_for_analysis(data: dict, min_session_length_sec, min_sdrr, is_interpolation: bool, missing_ibis_prop=0.20 
 ):
-
 
     sample_for_calculation = {}
     excluded_summary = {}
+
+    
 
     for condition, condition_dict in data.items():
         sample_for_calculation[condition] = {}
         excluded_summary[condition] = {}
 
-        for participant, part_data in condition_dict.items():
-            subs_stat = part_data['refined_best_channel_data']['new_ibis_stats']
-            subs_data = part_data['refined_best_channel_data']['new_ibis_data']['data']
+
+        for participant, part_data in condition_dict.items():    
+            refined = part_data['refined_best_channel_data']
+
+            if is_interpolation:
+                subs_stat = refined['ibis_after_interpolation']['stats']
+                subs_data = refined['ibis_after_interpolation']['data']
+                subs_data_before_interpolation = refined['new_ibis_data']['data']
+            else:
+                subs_stat = refined['new_ibis_stats']
+                subs_data = refined['new_ibis_data']['data']
+                subs_data_before_interpolation = subs_data
 
             # Exclude invalid subjects
-            excluded_subs = exclude_invalid_subs(
+            excluded_subs = exclude_invalid_subs(subs_data,
+                subs_data_before_interpolation, 
                 subs_stat,
                 missing_ibis_prop,
+                is_interpolation,
                 min_session_length_sec,
                 min_sdrr
+                
             )
 
             # Filter out excluded subjects from data
@@ -47,11 +61,13 @@ def prepare_sample_for_analysis(data: dict, min_session_length_sec, min_sdrr, mi
 
 
 def exclude_invalid_subs(
+        subs_data:dict,
+        subs_data_before_interpolation:dict,
         subs_stat: dict, 
         missing_ibis_prop: float, 
+        is_interpolation :bool,
         min_session_length_sec: None,
-        sdrr_threshold=None   # ← NEW
-    ):
+        sdrr_threshold=None    ):
         
     excluded_subs = {}
 
@@ -73,15 +89,32 @@ def exclude_invalid_subs(
             excluded_subs[sub] = reason
     
     # -------- Missing IBI exclusion --------
-    for sub, stat_data in subs_stat.items():
-        if sub in excluded_subs:
-            continue
-        if stat_data['long_ibi_count'] >= missing_ibis_prop * stat_data['length_ibis_ts']:
-            reason = (
-                f"Long IBI count ({stat_data['long_ibi_count']}) exceeds "
-                f"{missing_ibis_prop*100:.0f}% of series length ({stat_data['length_ibis_ts']})"
-            )
-            excluded_subs[sub] = reason
+        if is_interpolation:
+            for sub, sub_data in subs_data.items():
+                if sub in excluded_subs:
+                    continue
+                ibis_length_before_interpolation = len(subs_data_before_interpolation[sub])
+                ibis_lenght_with_interpolation = len(sub_data)
+                interpolated_ibis_count = ibis_lenght_with_interpolation - ibis_length_before_interpolation
+
+                if interpolated_ibis_count >=missing_ibis_prop * ibis_lenght_with_interpolation:
+                    reason = (
+                                f"Interpolated ibis count ({interpolated_ibis_count}) exceeds "
+                                f"{missing_ibis_prop*100:.0f}% of series length after interpolation({ibis_lenght_with_interpolation})"
+                            )
+                    excluded_subs[sub] = reason
+
+        else:
+            for sub, stat_data in subs_stat.items():
+                if sub in excluded_subs:
+                    continue
+
+                if stat_data['long_ibi_count'] >= missing_ibis_prop * stat_data['length_ibis_ts']:
+                    reason = (
+                        f"Long IBI count ({stat_data['long_ibi_count']}) exceeds "
+                        f"{missing_ibis_prop*100:.0f}% of series length ({stat_data['length_ibis_ts']})"
+                    )
+                    excluded_subs[sub] = reason
 
     # -------- SDRR exclusion (NEW) --------
     if sdrr_threshold is not None:
@@ -102,9 +135,3 @@ def exclude_invalid_subs(
              
              
         
-        
-
-
-
-    
-
