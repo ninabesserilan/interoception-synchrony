@@ -23,18 +23,24 @@ parent_dir = Path(__file__).resolve().parent.parent
 
 data_dict = data_loader(dic_for_rsa)
 
+require_partner = False
         
 valid_sample, excluded_subs = prepare_sample_for_analysis(data_dict, min_session_length_sec= 60 , min_sdrr = 200, is_interpolation = True, missing_ibis_prop=0.20)
 
-rsa_dict, excluded_unmatched_subs = calculate_rsa(valid_sample, require_partner= True, ibi_value_th = 70000)
+rsa_dict, excluded_unmatched_subs = calculate_rsa(valid_sample, ibi_value_th = 70000, require_partner =require_partner )
 
 toys_dyad_num = len(rsa_dict['toys'].keys())      
 notoys_dyad_num = len(rsa_dict['no_toys'].keys()) 
 
 # Building united excluded subs data frame
 
-rsa_pickle_name = 'rsa_pickle.pkl'
-excluded_sub_name = "All excluded subs after rsa.xlsx"
+if require_partner== True:
+        rsa_pickle_name = 'rsa_pickle.pkl'
+        excluded_sub_name = "All excluded subs after rsa.xlsx"
+else:
+        rsa_pickle_name = 'rsa_pickle_with_unmatched_partners.pkl'
+        excluded_sub_name = "All excluded subs after rsa without unmatched partners.xlsx"
+
 
 
 final_excluded_df_toys_infant,final_excluded_df_toys_mom, final_excluded_df_notoys_infant, final_excluded_df_notoys_mom = excluded_subs_data(excluded_subs, excluded_unmatched_subs, data_dict)

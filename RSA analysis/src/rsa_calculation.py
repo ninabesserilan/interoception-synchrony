@@ -6,6 +6,8 @@ import neurokit2 as nk
 import numpy as np
 from pathlib import Path
 import pickle
+import copy
+
 
 def validate_array(arr: List[pd.Series]):
     for val in arr:
@@ -57,7 +59,7 @@ def calculate_rsa(valid_sample:dict,  ibi_value_th:int,require_partner=True):
         sample_to_analysis, excluded_summary = exclude_unmatched_pairs(valid_sample)
     else:
         # Skip alignment; use all subjects as-is
-        sample_to_analysis = valid_sample
+        sample_to_analysis = copy.deepcopy(valid_sample)  # or just valid_sample if not modifying
 
     rsa_dict = {}
 
