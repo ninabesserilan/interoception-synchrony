@@ -5,7 +5,7 @@ from build_dic_for_interpolation import build_dic_for_interpolation
 
 
 
-ibis_pickle_path = Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Best ch pipeline/all data improved and original chs.pkl')
+ibis_pickle_path = Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/Best ch pipeline/all data improved and original chs.pkl')
 
 data_dict = data_loader(ibis_pickle_path)
 

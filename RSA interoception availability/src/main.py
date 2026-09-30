@@ -2,8 +2,7 @@ from pathlib import Path
 import pandas as pd
 from data_loader import data_loader
 
-pickle_rsa = Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/RSA analysis/rsa_pickle.pkl')
-
+pickle_rsa = Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/RSA analysis/rsa_pickle.pkl')
 
 rsa_data = data_loader(pickle_rsa)
 
@@ -12,12 +11,12 @@ notoys_rsa_data = rsa_data['no_toys']
 
 
 
-ib_s = pd.read_csv(Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/RSA interoception availability/interoception data/ib_s.csv'))
-ibr_s = pd.read_csv(Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/RSA interoception availability/interoception data/ibr_s.csv'))
+ib_s = pd.read_csv(Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/RSA interoception availability/interoception data/ib_s.csv'))
+ibr_s = pd.read_csv(Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/RSA interoception availability/interoception data/ibr_s.csv'))
 
 
-ib_s_18mo = pd.read_csv(Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/RSA interoception availability/interoception data/ib_s_18mo.csv'))
-ibr_s_18mo = pd.read_csv(Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/RSA interoception availability/interoception data/ibr_s_18mo.csv'))
+ib_s_18mo = pd.read_csv(Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/RSA interoception availability/interoception data/ib_s_18mo.csv'))
+ibr_s_18mo = pd.read_csv(Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/RSA interoception availability/interoception data/ibr_s_18mo.csv'))
 
 
 

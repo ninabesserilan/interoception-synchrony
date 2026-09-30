@@ -16,7 +16,7 @@ import numpy as np
 
 
 
-dic_for_rsa = Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Interpolate IBI data/after interpolation_Moritz.pkl')
+dic_for_rsa = Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/Interpolate IBI data/after interpolation_Moritz.pkl')
 
 parent_dir = Path(__file__).resolve().parent.parent
 
