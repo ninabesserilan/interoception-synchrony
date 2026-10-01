@@ -6,7 +6,7 @@ import openpyxl
 parent_dir = Path(__file__).resolve().parent.parent
 
 
-new_interpolation = Path('/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Interpolate IBI data/after interpolation_Moritz.pkl')
+new_interpolation = Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/Interpolate IBI data/after interpolation_Moritz.pkl')
 save_stats_path = parent_dir /'IBIS statistics post interpolation_Moritz.xlsx'
 
 ibis_post_interpolation = data_loader(new_interpolation)

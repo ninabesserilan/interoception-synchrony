@@ -12,7 +12,7 @@ import numpy as np
 
 
 
-dic_for_interpolation = Path('/Users/nina/Desktop/University of Vienna/infant interoception/code/python code/interoception-synchrony/Prepare data for interpolation/data_for_interpolation.pkl')
+dic_for_interpolation = Path('/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/Prepare data for interpolation/data_for_interpolation.pkl')
 
 parent_dir = Path(__file__).resolve().parent.parent
 

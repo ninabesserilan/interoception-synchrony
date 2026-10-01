@@ -6,7 +6,7 @@ def js_spline_lookup(
     interpolation_groups,
     tension=0.2,
     node_path="node",
-    script_path="/Users/nina/Desktop/University of Vienna/PhD projects/python code/interoception-synchrony/Interpolate IBI data/src/js_curve_interpolator/run_interpolator.js"
+    script_path='/Users/nina/Desktop/University of Vienna/PhD projects/infant interoception/code/python code/interoception-synchrony/Interpolate IBI data/src/js_curve_interpolator/run_interpolator.js'
 ):
     payload = {
         "ibi_indexed": ibi_indexed,
